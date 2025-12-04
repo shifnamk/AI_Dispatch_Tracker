@@ -7,7 +7,16 @@
 
 A modern, AI-powered food detection and tracking system using YOLO-World and MobileNet for real-time object detection with a beautiful React frontend and robust Flask backend.
 
-![ServeTrack Demo](https://via.placeholder.com/800x400/4F46E5/FFFFFF?text=ServeTrack+Demo)
+
+
+https://github.com/user-attachments/assets/ab9ebcc2-3b07-4e92-9f4e-d973297a25d1
+
+<img width="2535" height="1421" alt="Screenshot 2025-12-04 153839" src="https://github.com/user-attachments/assets/f83c4efd-294f-49dc-b0c5-bc2acabcd916" />
+<img width="2520" height="1411" alt="Screenshot 2025-12-04 153829" src="https://github.com/user-attachments/assets/10d9ace5-9a95-4617-88f4-7e0968b6f987" />
+<img width="2545" height="1418" alt="Screenshot 2025-12-04 153820" src="https://github.com/user-attachments/assets/80b315e4-7f03-4df2-9cc2-6c86eb99991c" />
+<img width="2542" height="1423" alt="Screenshot 2025-12-04 153807" src="https://github.com/user-attachments/assets/65153c0d-1df0-4504-95b8-4f6af025ff7e" />
+<img width="2536" height="1418" alt="Screenshot 2025-12-04 153757" src="https://github.com/user-attachments/assets/ba6320c2-eca0-4de7-8ee9-026bfcc39b77" />
+
 
 ## 🌟 Overview
 
