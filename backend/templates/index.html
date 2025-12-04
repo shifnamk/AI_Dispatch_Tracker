@@ -1,0 +1,362 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Food Recognition System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="mb-0">
+                <i class="fas fa-tachometer-alt text-primary"></i> 
+                Real-Time Food Recognition Dashboard
+            </h1>
+            <p class="text-muted">Monitor food items passing through your restaurant counter</p>
+        </div>
+    </div>
+
+    <!-- System Status Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-eye fa-2x text-success mb-2"></i>
+                    <h6 class="card-title">Detection Status</h6>
+                    <span id="detection-status" class="badge bg-secondary">Stopped</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-utensils fa-2x text-info mb-2"></i>
+                    <h6 class="card-title">Menu Items</h6>
+                    <span class="detection-counter" id="menu-count">0</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                    <h6 class="card-title">Items Today</h6>
+                    <span class="detection-counter" id="total-today">0</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-chart-line fa-2x text-primary mb-2"></i>
+                    <h6 class="card-title">Accuracy</h6>
+                    <span class="detection-counter">95%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detection Controls -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-play-circle"></i> Detection Controls
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex gap-2">
+                        <button id="start-detection" class="btn btn-success">
+                            <i class="fas fa-play"></i> Start Detection
+                        </button>
+                        <button id="stop-detection" class="btn btn-danger" disabled>
+                            <i class="fas fa-stop"></i> Stop Detection
+                        </button>
+                        <button id="reset-counts" class="btn btn-warning">
+                            <i class="fas fa-refresh"></i> Reset Counts
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Real-time Counts -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history"></i> Live Detection History
+                    </h5>
+                    <small class="text-muted">Last updated: <span id="last-update">Never</span></small>
+                </div>
+                <div class="card-body">
+                    <div id="counts-container" style="max-height: 400px; overflow-y: auto; padding-right: 10px;">
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-info-circle fa-2x mb-2"></i>
+                            <p>No items detected yet. Start detection to begin monitoring.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-plus-circle"></i> Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('menu_management') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-plus"></i> Add New Menu Item
+                        </a>
+                        <a href="{{ url_for('camera_view') }}" class="btn btn-outline-info">
+                            <i class="fas fa-camera"></i> View Live Camera
+                        </a>
+                        <a href="{{ url_for('camera_settings') }}" class="btn btn-outline-warning">
+                            <i class="fas fa-cog"></i> Camera Settings
+                        </a>
+                        <a href="{{ url_for('analytics') }}" class="btn btn-outline-success">
+                            <i class="fas fa-chart-line"></i> View Analytics
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle"></i> System Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li><strong>Model:</strong> EfficientNet-B0</li>
+                        <li><strong>Processing:</strong> Real-time</li>
+                        <li><strong>Accuracy Threshold:</strong> 80%</li>
+                        <li><strong>Frame Rate:</strong> 30 FPS</li>
+                        <li><strong>Detection Window:</strong> 224x224px</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    console.log('🚀 Dashboard JavaScript loaded successfully');
+    let detectionActive = false;
+    // WebSocket live counts
+    try {
+        const socket = io();
+        socket.on('connect', function(){ console.log('🔌 Socket connected (dashboard)'); });
+        socket.on('counts_update', function(data){
+            const counts = (data && data.counts) ? data.counts : {};
+            updateCountsDisplay(counts);
+            const total = Object.values(counts).reduce((a,b)=>a+b,0);
+            $('#total-today').text(total);
+            if (data && data.timestamp) {
+                $('#last-update').text(new Date(data.timestamp).toLocaleTimeString());
+            }
+        });
+    } catch(e) { console.log('⚠️ Socket init failed on dashboard:', e); }
+    
+    // Start detection
+    $('#start-detection').click(function() {
+        $.post('/start_detection', function(response) {
+            if (response.success) {
+                detectionActive = true;
+                $('#detection-status').removeClass('bg-secondary').addClass('bg-success').text('Active');
+                $('#start-detection').prop('disabled', true);
+                $('#stop-detection').prop('disabled', false);
+                startCountsUpdate();
+            }
+        }).fail(function() {
+            alert('Failed to start detection. Please check camera connection.');
+        });
+    });
+    
+    // Stop detection
+    $('#stop-detection').click(function() {
+        $.post('/stop_detection', function(response) {
+            if (response.success) {
+                detectionActive = false;
+                $('#detection-status').removeClass('bg-success').addClass('bg-secondary').text('Stopped');
+                $('#start-detection').prop('disabled', false);
+                $('#stop-detection').prop('disabled', true);
+                stopCountsUpdate();
+            }
+        });
+    });
+    
+    // Reset counts
+    $('#reset-counts').click(function() {
+        if (confirm('Are you sure you want to reset all counts and detection history?')) {
+            $.post('/reset_counts', function(response) {
+                if (response.success) {
+                    updateDetectionHistoryDisplay([], {});
+                    $('#total-today').text('0');
+                }
+            });
+        }
+    });
+    
+    let countsInterval;
+    
+    function startCountsUpdate() {
+        countsInterval = setInterval(updateCounts, 5000); // Fallback poll
+        // Start SSE for instant updates
+        try {
+            const es = new EventSource('/counts_sse');
+            es.onmessage = function(evt){
+                try {
+                    const data = JSON.parse(evt.data || '{}');
+                    const counts = data.counts || {};
+                    updateCountsDisplay(counts);
+                    const total = Object.values(counts).reduce((a,b)=>a+b,0);
+                    $('#total-today').text(total);
+                    if (data.timestamp) $('#last-update').text(new Date(data.timestamp).toLocaleTimeString());
+                } catch(e) { console.log('SSE parse error', e); }
+            };
+        } catch(e) { console.log('SSE init failed', e); }
+    }
+    
+    function stopCountsUpdate() {
+        if (countsInterval) {
+            clearInterval(countsInterval);
+        }
+    }
+    
+    function updateCounts() {
+        if (!detectionActive) return;
+        
+        // Add cache-busting parameter to force fresh data
+        const cacheBuster = '?v=' + Date.now();
+        
+        $.get('/get_counts' + cacheBuster, function(response) {
+            console.log('🔥 FRESH API Response:', response); // Debug log
+            
+            // FORCE NEW FORMAT - Check if we have detection history
+            if (response.detection_history && Array.isArray(response.detection_history)) {
+                console.log('✅ Using NEW detection history format! Count:', response.detection_history.length);
+                updateDetectionHistoryDisplay(response.detection_history, response.grouped_history || {});
+                $('#total-today').text(response.total_detections || response.detection_history.length);
+            } else if (response.format === 'detection_history') {
+                console.log('✅ Format flag detected, using detection history');
+                updateDetectionHistoryDisplay(response.detection_history || [], response.grouped_history || {});
+                $('#total-today').text(response.total_detections || 0);
+            } else {
+                console.log('⚠️ Fallback to OLD simple counts format');
+                updateCountsDisplay(response.counts || {});
+                const total = Object.values(response.counts || {}).reduce((sum, count) => sum + count, 0);
+                $('#total-today').text(total);
+            }
+            
+            $('#last-update').text(new Date(response.timestamp).toLocaleTimeString());
+        }).fail(function(xhr, status, error) {
+            console.log('❌ API call failed:', status, error);
+        });
+    }
+    
+    function updateDetectionHistoryDisplay(detectionHistory, groupedHistory) {
+        const container = $('#counts-container');
+        
+        if (!detectionHistory || detectionHistory.length === 0) {
+            container.html(`
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-info-circle fa-2x mb-2"></i>
+                    <p>No items detected yet. Start detection to begin monitoring.</p>
+                </div>
+            `);
+            return;
+        }
+        
+        let html = '<div class="row">';
+        
+        // Display detection history grouped by item
+        for (const [itemName, detections] of Object.entries(groupedHistory)) {
+            html += `
+                <div class="col-md-6 mb-3">
+                    <div class="card border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-utensils"></i> ${itemName}
+                                <span class="badge bg-light text-dark ms-2">Total: ${detections.length}</span>
+                            </h6>
+                        </div>
+                        <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+            `;
+            
+            // Show individual detection entries
+            detections.forEach((detection, index) => {
+                const confidence = (detection.confidence * 100).toFixed(1);
+                html += `
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                        <div>
+                            <strong>${detection.item_name}</strong>
+                            <br>
+                            <small class="text-muted">
+                                <i class="fas fa-clock"></i> ${detection.detection_time}
+                            </small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-success">Count: ${detection.count_number}</span>
+                            <br>
+                            <small class="text-muted">${confidence}% confidence</small>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        html += '</div>';
+        container.html(html);
+    }
+    
+    // Keep backward compatibility function
+    function updateCountsDisplay(counts) {
+        // Convert simple counts to detection history format for backward compatibility
+        const fakeHistory = [];
+        const fakeGrouped = {};
+        
+        for (const [item, count] of Object.entries(counts)) {
+            fakeGrouped[item] = [];
+            for (let i = 1; i <= count; i++) {
+                fakeGrouped[item].push({
+                    item_name: item,
+                    detection_time: new Date().toLocaleTimeString(),
+                    count_number: i,
+                    confidence: 0.85
+                });
+            }
+        }
+        
+        updateDetectionHistoryDisplay(fakeHistory, fakeGrouped);
+    }
+    
+    // Load initial menu count
+    // This would be implemented with an API endpoint
+    $('#menu-count').text('0');
+});
+</script>
+{% endblock %}

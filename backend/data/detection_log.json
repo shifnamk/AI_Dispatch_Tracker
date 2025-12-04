@@ -1,0 +1,16 @@
+{
+  "detections": [
+    {
+      "item": "milk tea",
+      "timestamp": "2025-09-03T13:13:53.563904",
+      "order_id": 1,
+      "type": "ordered"
+    },
+    {
+      "item": "black coffee",
+      "timestamp": "2025-09-03T13:13:53.571212",
+      "order_id": 2,
+      "type": "ordered"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "detections": [
+    {
+      "item": "cup",
+      "confidence": 0.85,
+      "timestamp": "2025-08-27T11:45:55.738794"
+    },
+    {
+      "item": "pizza",
+      "confidence": 0.85,
+      "timestamp": "2025-08-27T11:46:05.046688"
+    },
+    {
+      "item": "apple",
+      "confidence": 0.85,
+      "timestamp": "2025-08-27T11:46:11.254351"
+    },
+    {
+      "item": "sandwich",
+      "confidence": 0.85,
+      "timestamp": "2025-08-27T11:46:14.362164"
+    },
+    {
+      "item": "apple",
+      "confidence": 0.85,
+      "timestamp": "2025-08-27T11:46:28.894002"
+    },
+    {
+      "item": "sandwich",
+      "confidence": 0.85,
+      "timestamp": "2025-08-27T11:46:35.102059"
+    }
+  ]
+}

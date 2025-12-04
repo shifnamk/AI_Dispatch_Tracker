@@ -1,0 +1,16 @@
+{
+  "cameras": [
+    {
+      "id": 1756284741,
+      "name": "KITCHEN",
+      "url": "rtsp://100.76.213.72:8554/Dispatch",
+      "camera_type": "ip",
+      "username": null,
+      "password": null,
+      "is_active": true,
+      "created_at": "2025-08-27T12:52:21.315686",
+      "last_tested": "2025-08-27T12:52:25.203619",
+      "connection_status": "connected"
+    }
+  ]
+}

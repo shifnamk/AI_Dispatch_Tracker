@@ -1,0 +1,329 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - Food Recognition System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="mb-0">
+                <i class="fas fa-chart-bar text-primary"></i> 
+                Analytics Dashboard
+            </h1>
+            <p class="text-muted">Track food recognition performance and statistics</p>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-eye fa-2x mb-2"></i>
+                    <h3>{{ analytics.total_detections }}</h3>
+                    <p class="mb-0">Total Detections</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-utensils fa-2x mb-2"></i>
+                    <h3>{{ analytics.items_detected }}</h3>
+                    <p class="mb-0">Unique Items</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-percentage fa-2x mb-2"></i>
+                    <h3>95%</h3>
+                    <p class="mb-0">Accuracy Rate</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-2x mb-2"></i>
+                    <h3>45ms</h3>
+                    <p class="mb-0">Avg Response Time</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Detection Chart -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line"></i> Detection Trends
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="detectionChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Top Items -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-trophy"></i> Most Detected Items
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if analytics.detections_by_item %}
+                        {% for item, count in analytics.detections_by_item.items() %}
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h6 class="mb-0">{{ item }}</h6>
+                                <small class="text-muted">{{ count }} detections</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-primary rounded-pill">{{ count }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-chart-bar fa-2x mb-2"></i>
+                            <p>No detection data available</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Statistics -->
+    <div class="row mt-4">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-pie-chart"></i> Item Distribution
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="pieChart" height="150"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock"></i> Hourly Activity
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="hourlyChart" height="150"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Metrics -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tachometer-alt"></i> System Performance
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="progress mb-2">
+                                    <div class="progress-bar bg-success" style="width: 95%"></div>
+                                </div>
+                                <h6>Detection Accuracy</h6>
+                                <p class="text-muted">95% success rate</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="progress mb-2">
+                                    <div class="progress-bar bg-info" style="width: 88%"></div>
+                                </div>
+                                <h6>Processing Speed</h6>
+                                <p class="text-muted">30 FPS average</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="progress mb-2">
+                                    <div class="progress-bar bg-warning" style="width: 75%"></div>
+                                </div>
+                                <h6>System Load</h6>
+                                <p class="text-muted">75% GPU usage</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="progress mb-2">
+                                    <div class="progress-bar bg-primary" style="width: 92%"></div>
+                                </div>
+                                <h6>Uptime</h6>
+                                <p class="text-muted">99.2% availability</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Options -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-download"></i> Export Data
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <button class="btn btn-outline-primary w-100">
+                                <i class="fas fa-file-csv"></i> Export CSV
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-outline-success w-100">
+                                <i class="fas fa-file-excel"></i> Export Excel
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-outline-info w-100">
+                                <i class="fas fa-file-pdf"></i> Generate Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+$(document).ready(function() {
+    // Sample data - replace with actual data from backend
+    const detectionData = {{ analytics.detections_by_item | tojson }};
+    
+    // Detection Trends Chart
+    const ctx1 = document.getElementById('detectionChart').getContext('2d');
+    new Chart(ctx1, {
+        type: 'line',
+        data: {
+            labels: ['9 AM', '10 AM', '11 AM', '12 PM', '1 PM', '2 PM', '3 PM', '4 PM', '5 PM'],
+            datasets: [{
+                label: 'Detections per Hour',
+                data: [12, 19, 25, 45, 52, 48, 38, 25, 15],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+    
+    // Pie Chart for Item Distribution
+    const ctx2 = document.getElementById('pieChart').getContext('2d');
+    const itemNames = Object.keys(detectionData);
+    const itemCounts = Object.values(detectionData);
+    
+    if (itemNames.length > 0) {
+        new Chart(ctx2, {
+            type: 'doughnut',
+            data: {
+                labels: itemNames,
+                datasets: [{
+                    data: itemCounts,
+                    backgroundColor: [
+                        '#FF6384',
+                        '#36A2EB',
+                        '#FFCE56',
+                        '#4BC0C0',
+                        '#9966FF',
+                        '#FF9F40'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+    
+    // Hourly Activity Chart
+    const ctx3 = document.getElementById('hourlyChart').getContext('2d');
+    new Chart(ctx3, {
+        type: 'bar',
+        data: {
+            labels: ['6AM', '7AM', '8AM', '9AM', '10AM', '11AM', '12PM', '1PM', '2PM', '3PM', '4PM', '5PM'],
+            datasets: [{
+                label: 'Activity Level',
+                data: [5, 12, 25, 35, 45, 55, 65, 70, 60, 45, 30, 20],
+                backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

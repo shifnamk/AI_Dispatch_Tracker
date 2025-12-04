@@ -1,0 +1,173 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+venv/
+env/
+ENV/
+.venv
+
+# Flask
+instance/
+.webassets-cache
+
+# PyTorch/ML Models
+*.pt
+*.pth
+*.onnx
+*.pb
+*.h5
+*.ckpt
+*.pkl
+*.pickle
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environment variables
+.env
+.env.local
+.env.production
+*.env
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Build outputs
+dist/
+dist-ssr/
+*.local
+build/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Testing
+coverage/
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.coveragerc
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Detection outputs
+detections/
+backend/detections/
+
+# Static uploads (optional - uncomment if you don't want to track uploads)
+# backend/static/uploads/*
+# !backend/static/uploads/.gitkeep
+
+# MediaMTX
+backend/mediamtx/
+*.zip
+
+# PM2
+.pm2/
+ecosystem.config.js.backup
+
+# Backup files
+*.backup
+*.old
+SERVETRACK_BACKUP/
+
+# OS files
+Thumbs.db
+desktop.ini
+
+# Certificate files
+*.pem
+*.key
+*.crt
+*.csr
+
+# Documentation (keep README.md)
+ALL_FEATURES_RESTORED.md
+AUTO_DETECTION_ENABLED.md
+COMPLETE_UI_FEATURES.md
+CURRENT_DATA_STATUS.md
+DATA_SYNC_VERIFICATION.md
+DEPLOYMENT_SUMMARY.md
+FRONTEND_REDESIGN.md
+LIGHT_AESTHETIC_THEME.md
+NEW_THEME_APPLIED.md
+PRODUCTION_DEPLOYMENT.md
+QUICKSTART.md
+SSL_SETUP_COMPLETE.md
+SYNC_TEST_RESULTS.txt
+
+# Data files (optional - uncomment if you want to exclude data)
+# backend/data/*.json
+# backend/menu/
+
+# GitHub specific
+.github/
+*.md.backup
+
+# Keep these important files
+!.gitkeep
+!.gitignore
+!README.md
+!LICENSE
+!requirements.txt
+!package.json
+!package-lock.json

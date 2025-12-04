@@ -1,0 +1,22 @@
+{
+  "items": [
+    {
+      "id": 1,
+      "name": "Water Bottle",
+      "description": "",
+      "reference_images": [
+        "1761200097968/1761200097968_WhatsApp_Image_2025-10-22_at_13.04.48_d7335e2d.jpg"
+      ],
+      "created_at": "2025-10-23T10:14:57.970148"
+    },
+    {
+      "id": 2,
+      "name": "Tea",
+      "description": "",
+      "reference_images": [
+        "1763537932134/1763537932134_WhatsApp_Image_2025-10-22_at_13.04.48_a232858e.jpg"
+      ],
+      "created_at": "2025-11-19T11:38:52.135172"
+    }
+  ]
+}

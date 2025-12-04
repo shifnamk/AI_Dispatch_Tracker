@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Annotated Frames - Manual Verification{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-images"></i> Annotated Frames - Manual Verification</h2>
+                <div>
+                    <button class="btn btn-warning" onclick="clearAllFrames()">
+                        <i class="fas fa-trash"></i> Clear All Frames
+                    </button>
+                    <a href="{{ url_for('camera_view') }}" class="btn btn-primary">
+                        <i class="fas fa-video"></i> Back to Live Feed
+                    </a>
+                </div>
+            </div>
+
+            {% if frames %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> 
+                    Found <strong>{{ frames|length }}</strong> annotated frames with detections for manual verification.
+                    <br><strong>🎯 Grad-CAM heatmaps</strong> show exactly WHERE in the frame YOLOE detected each item!
+                </div>
+
+                <div class="row">
+                    {% for frame in frames %}
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card">
+                            <!-- Grad-CAM badges removed -->
+                            
+                            <img src="{{ url_for('serve_temp_file', filename=frame.filename) }}" 
+                                 class="card-img-top" 
+                                 alt="Detection Frame"
+                                 style="height: 250px; object-fit: cover;">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    📷 Detection Frame
+                                </h6>
+                                <p class="card-text">
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock"></i> {{ frame.created }}<br>
+                                        <i class="fas fa-file"></i> {{ "%.2f"|format(frame.size / 1024) }} KB
+                                    </small>
+                                </p>
+                                <a href="{{ url_for('serve_temp_file', filename=frame.filename) }}" 
+                                   target="_blank" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-expand"></i> View Full Size
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-warning text-center">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    <h4>No Annotated Frames Found</h4>
+                    <p>No frames with detections have been saved yet. Start detection to begin capturing annotated frames.</p>
+                    <a href="{{ url_for('camera_view') }}" class="btn btn-primary">
+                        <i class="fas fa-video"></i> Go to Live Camera Feed
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function clearAllFrames() {
+    if (confirm('Are you sure you want to clear all annotated frames? This action cannot be undone.')) {
+        fetch('/clear_annotated_frames', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('All annotated frames cleared successfully!');
+                location.reload();
+            } else {
+                alert('Error clearing frames: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error clearing frames');
+        });
+    }
+}
+</script>
+{% endblock %}

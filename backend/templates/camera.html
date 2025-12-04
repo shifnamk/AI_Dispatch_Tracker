@@ -1,0 +1,441 @@
+{% extends "base.html" %}
+
+{% block title %}Live Camera - Food Recognition System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="mb-0">
+                <i class="fas fa-camera text-primary"></i> 
+                Live Camera Feed
+            </h1>
+            <p class="text-muted">Real-time food detection and counting</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Camera Feed -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-video"></i> Camera Feed
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <button id="start-camera" class="btn btn-success btn-sm">
+                            <i class="fas fa-play"></i> Start
+                        </button>
+                        <button id="stop-camera" class="btn btn-danger btn-sm" disabled>
+                            <i class="fas fa-stop"></i> Stop
+                        </button>
+                        <button id="toggle-fullscreen" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-expand"></i> Fullscreen
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div id="camera-container" class="position-relative">
+                        <!-- Processed MJPEG stream with boxes + OIDs from backend -->
+                        <img id="camera-mjpeg" class="w-100" style="max-height: 600px; object-fit: contain;" 
+                             src="{{ url_for('video_feed_processed') }}" alt="Live Camera" />
+                        
+                        <!-- Detection Overlay -->
+                        <div id="detection-overlay" class="position-absolute top-0 start-0 w-100 h-100" style="pointer-events: none;"></div>
+                        
+                        <!-- Stats Overlay -->
+                        <div class="position-absolute top-0 end-0 m-3">
+                            <div class="bg-dark bg-opacity-75 text-white p-2 rounded">
+                                <small>
+                                    <div>FPS: <span id="fps-counter">0</span></div>
+                                    <div>Detections: <span id="detection-counter">0</span></div>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Camera Settings -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-cog"></i> Camera Settings
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <label for="camera-url" class="form-label">Camera URL</label>
+                            <input type="text" class="form-control" id="camera-url" 
+                                   placeholder="Enter camera source (0 for webcam, RTSP URL, etc.)"
+                                   value="rtsp://100.76.213.72:8554/Dispatch">
+                            <small class="text-muted">
+                                Examples: <br>
+                                • Webcam: <code>0</code> or <code>1</code><br>
+                                • RTSP: <code>rtsp://100.76.213.72:8554/Dispatch</code><br>
+                                • HTTP: <code>http://100.76.213.72:8554/stream</code>
+                            </small>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label">Visualization</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="show-boxes" checked>
+                                <label class="form-check-label" for="show-boxes">
+                                    Show Detection Boxes
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="show-labels" checked>
+                                <label class="form-check-label" for="show-labels">
+                                    Show Labels
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Real-time Stats -->
+        <div class="col-lg-4">
+            <!-- Current Detections -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-eye"></i> Current Detections
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div id="current-detections">
+                        <div class="text-center text-muted">
+                            <i class="fas fa-search"></i>
+                            <p class="mb-0 mt-2">No detections</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Live Counts -->
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-bar"></i> Live Counts
+                    </h6>
+                    <button id="reset-session-counts" class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-refresh"></i> Reset
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="live-counts" style="max-height: 300px; overflow-y: auto; padding-right: 10px;">
+                        <div class="text-center text-muted">
+                            <i class="fas fa-calculator"></i>
+                            <p class="mb-0 mt-2">No items counted</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Activity -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-history"></i> Recent Activity
+                    </h6>
+                </div>
+                <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                    <div id="recent-activity">
+                        <div class="text-center text-muted">
+                            <i class="fas fa-clock"></i>
+                            <p class="mb-0 mt-2">No recent activity</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- HLS.js for optimized HLS playback -->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script>
+$(document).ready(function() {
+    let cameraActive = false;
+    let detectionActive = false;
+    let activityLog = [];
+    // WebSocket live counts for camera sidebar
+    try {
+        const socket = io();
+        socket.on('connect', function(){ console.log('🔌 Socket connected (camera)'); });
+        socket.on('counts_update', function(data){
+            const counts = (data && data.counts) ? data.counts : {};
+            updateLiveCounts(counts);
+            const total = Object.values(counts).reduce((a,b)=>a+b,0);
+            $('#detection-counter').text(total);
+        });
+    } catch(e) { console.log('⚠️ Socket init failed on camera:', e); }
+    
+    console.log('📹 Processed MJPEG stream ready');
+    
+    // Camera controls
+    $('#start-camera').click(function() {
+        startCamera();
+    });
+    
+    $('#stop-camera').click(function() {
+        stopCamera();
+    });
+    
+    // Fullscreen toggle
+    $('#toggle-fullscreen').click(function() {
+        const container = document.getElementById('camera-container');
+        if (document.fullscreenElement) {
+            document.exitFullscreen();
+            $(this).html('<i class="fas fa-expand"></i> Fullscreen');
+        } else {
+            container.requestFullscreen();
+            $(this).html('<i class="fas fa-compress"></i> Exit Fullscreen');
+        }
+    });
+    
+
+    
+    function startCamera() {
+        // Start backend detection; MJPEG is already bound to /video_feed
+        // Update UI immediately
+        cameraActive = true;
+        $('#start-camera').prop('disabled', true);
+        $('#stop-camera').prop('disabled', false);
+        
+        console.log('🚀 Starting backend detection (single-loop) and showing processed MJPEG...');
+        startYOLODetection();
+    }
+    
+    function startYOLODetection() {
+        console.log('🤖 Starting YOLO food detection...');
+        
+        const cameraUrl = $('#camera-url').val().trim();
+        if (!cameraUrl) {
+            alert('Please enter a camera URL');
+            $('#start-camera').prop('disabled', false);
+            $('#stop-camera').prop('disabled', true);
+            cameraActive = false;
+            return;
+        }
+        
+        // Start detection backend with camera URL
+        $.ajax({
+            url: '/start_detection',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({camera_url: cameraUrl}),
+            success: function(response) {
+                if (response.success) {
+                    detectionActive = true;
+                    startRealTimeUpdates();
+                    console.log('✅ YOLO detection active - monitoring food items');
+                    addActivity('Food detection started with ' + cameraUrl, 'success');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('❌ YOLO detection failed to start:', error);
+                addActivity('Detection startup failed: ' + (xhr.responseJSON?.error || error), 'warning');
+                $('#start-camera').prop('disabled', false);
+                $('#stop-camera').prop('disabled', true);
+                cameraActive = false;
+            }
+        });
+    }
+    
+    function stopCamera() {
+        console.log('⏹️ Stopping CCTV stream and YOLO detection...');
+        
+        // MJPEG is stateless; no special teardown required
+        
+        // Update UI
+        $('#start-camera').prop('disabled', false);
+        $('#stop-camera').prop('disabled', true);
+        
+        cameraActive = false;
+        detectionActive = false;
+        
+        // Stop backend detection
+        $.post('/stop_detection', function(response) {
+            if (response.success) {
+                stopRealTimeUpdates();
+                console.log('✅ YOLO detection stopped');
+                addActivity('CCTV stream and detection stopped', 'info');
+            }
+        }).fail(function() {
+            console.log('⚠️ Detection stop failed (might already be stopped)');
+        });
+    }
+    
+    let updateInterval;
+    let fpsCounter = 0;
+    let lastFpsUpdate = Date.now();
+    
+    function startRealTimeUpdates() {
+        console.log('📊 Starting real-time food detection monitoring...');
+        
+        updateInterval = setInterval(function() {
+            if (!detectionActive) return;
+            
+            // Update FPS counter (video playback)
+            fpsCounter++;
+            const now = Date.now();
+            if (now - lastFpsUpdate >= 1000) {
+                $('#fps-counter').text(fpsCounter);
+                fpsCounter = 0;
+                lastFpsUpdate = now;
+            }
+            
+            // Get food detection counts
+            const cacheBuster = '?v=' + Date.now();
+            $.get('/get_counts' + cacheBuster, function(response) {
+                console.log('🔥 Camera Page API Response:', response);
+                updateLiveCounts(response.counts || {});
+            }).fail(function() {
+                console.log('⚠️ Failed to get detection updates');
+            });
+            
+
+            
+        }, 1000); // Update every second for real-time monitoring
+
+        // Start SSE for instant counts
+        try {
+            const es = new EventSource('/counts_sse');
+            es.onmessage = function(evt){
+                try {
+                    const data = JSON.parse(evt.data || '{}');
+                    const counts = data.counts || {};
+                    updateLiveCounts(counts);
+                    const total = Object.values(counts).reduce((a,b)=>a+b,0);
+                    $('#detection-counter').text(total);
+                } catch(e) { console.log('SSE parse error', e); }
+            };
+        } catch(e) { console.log('SSE init failed', e); }
+    }
+    
+    function updateCurrentDetections(detections) {
+        const container = $('#current-detections');
+        container.html(`
+            <div class="text-center text-muted">
+                <i class="fas fa-search"></i>
+                <p class="mb-0 mt-2">Scanning for food items...</p>
+            </div>
+        `);
+    }
+    
+    function stopRealTimeUpdates() {
+        if (updateInterval) {
+            clearInterval(updateInterval);
+        }
+        $('#fps-counter').text('0');
+        $('#detection-counter').text('0');
+    }
+    
+
+    
+    function updateLiveCounts(counts) {
+        const container = $('#live-counts');
+        
+        if (Object.keys(counts).length === 0) {
+            container.html(`
+                <div class="text-center text-muted">
+                    <i class="fas fa-calculator"></i>
+                    <p class="mb-0 mt-2">No items counted</p>
+                </div>
+            `);
+            return;
+        }
+        
+        let html = '';
+        let totalDetections = 0;
+        
+        for (const [item, count] of Object.entries(counts)) {
+            totalDetections += count;
+            html += `
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-medium">${item}</span>
+                    <span class="badge bg-primary rounded-pill">${count}</span>
+                </div>
+            `;
+        }
+        
+        container.html(html);
+        $('#detection-counter').text(totalDetections);
+    }
+    
+    function addActivity(message, type = 'info') {
+        const timestamp = new Date().toLocaleTimeString();
+        const activity = {
+            message: message,
+            type: type,
+            timestamp: timestamp
+        };
+        
+        activityLog.unshift(activity);
+        if (activityLog.length > 20) {
+            activityLog.pop();
+        }
+        
+        updateActivityLog();
+    }
+    
+    function updateActivityLog() {
+        const container = $('#recent-activity');
+        
+        if (activityLog.length === 0) {
+            container.html(`
+                <div class="text-center text-muted">
+                    <i class="fas fa-clock"></i>
+                    <p class="mb-0 mt-2">No recent activity</p>
+                </div>
+            `);
+            return;
+        }
+        
+        let html = '';
+        activityLog.forEach(function(activity) {
+            const badgeClass = activity.type === 'success' ? 'bg-success' : 
+                              activity.type === 'danger' ? 'bg-danger' : 'bg-info';
+            
+            html += `
+                <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                    <div>
+                        <small class="fw-medium">${activity.message}</small>
+                    </div>
+                    <small class="text-muted">${activity.timestamp}</small>
+                </div>
+            `;
+        });
+        
+        container.html(html);
+    }
+    
+    // Reset session counts
+    $('#reset-session-counts').click(function() {
+        if (confirm('Reset counts for this session?')) {
+            $.post('/reset_counts', function(response) {
+                if (response.success) {
+                    updateLiveCounts({});
+                    addActivity('Session counts reset', 'warning');
+                }
+            });
+        }
+    });
+    
+    // Handle fullscreen events
+    document.addEventListener('fullscreenchange', function() {
+        if (!document.fullscreenElement) {
+            $('#toggle-fullscreen').html('<i class="fas fa-expand"></i> Fullscreen');
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,69 @@
+{
+  "last7Days": [
+    {
+      "date": "Nov 13",
+      "fullDate": "2025-11-13",
+      "items": {
+        "Water Bottle": 9,
+        "Tea": 15
+      }
+    },
+    {
+      "date": "Nov 14",
+      "fullDate": "2025-11-14",
+      "items": {
+        "Water Bottle": 11,
+        "Tea": 14
+      }
+    },
+    {
+      "date": "Nov 15",
+      "fullDate": "2025-11-15",
+      "items": {
+        "Water Bottle": 8,
+        "Tea": 13
+      }
+    },
+    {
+      "date": "Nov 16",
+      "fullDate": "2025-11-16",
+      "items": {
+        "Water Bottle": 10,
+        "Tea": 15
+      }
+    },
+    {
+      "date": "Nov 17",
+      "fullDate": "2025-11-17",
+      "items": {
+        "Water Bottle": 9,
+        "Tea": 14
+      }
+    },
+    {
+      "date": "Nov 18",
+      "fullDate": "2025-11-18",
+      "items": {
+        "Water Bottle": 11,
+        "Tea": 13
+      }
+    },
+    {
+      "date": "Nov 19",
+      "fullDate": "2025-11-19",
+      "items": {
+        "Water Bottle": 10,
+        "Tea": 15
+      }
+    }
+  ],
+  "totals": {
+    "Water Bottle": 68,
+    "Tea": 99
+  },
+  "averages": {
+    "Water Bottle": 9.7,
+    "Tea": 14.1
+  }
+}
+

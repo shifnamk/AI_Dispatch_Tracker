@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}Menu Management - Food Recognition System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="mb-0">
+                <i class="fas fa-list text-primary"></i> 
+                Menu Management
+            </h1>
+            <p class="text-muted">Add and manage food items for recognition</p>
+        </div>
+    </div>
+
+    <!-- Add New Item Form -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-plus-circle"></i> Add New Menu Item
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="add-item-form" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="item-name" class="form-label">Item Name *</label>
+                                    <input type="text" class="form-control" id="item-name" name="name" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="item-description" class="form-label">Description</label>
+                                    <textarea class="form-control" id="item-description" name="description" rows="3"></textarea>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="item-images" class="form-label">Reference Images * (Top-down view)</label>
+                                    <input type="file" class="form-control" id="item-images" name="images" multiple accept="image/*" required>
+                                    <div class="form-text">Upload 1 or more images. If you upload just 1 clear image, the system will auto-augment it for accuracy.</div>
+                                </div>
+                                
+                                <div id="image-preview" class="mb-3"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Add Menu Item
+                                </button>
+                                <button type="reset" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Clear Form
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Existing Menu Items -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-utensils"></i> Current Menu Items
+                    </h5>
+                    <span class="badge bg-primary">{{ menu_items|length }} items</span>
+                </div>
+                <div class="card-body">
+                    {% if menu_items %}
+                        <div class="row">
+                            {% for item in menu_items %}
+                            <div class="col-md-4 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">{{ item.name }}</h6>
+                                        <small class="text-muted">{{ item.reference_images|length }} images</small>
+                                    </div>
+                                    <div class="card-body">
+                                        {% if item.description %}
+                                            <p class="card-text">{{ item.description }}</p>
+                                        {% else %}
+                                            <p class="card-text text-muted">No description provided</p>
+                                        {% endif %}
+                                        
+                                        {% set first_path = (item.reference_images[0] if item.reference_images else None) %}
+                                        {% if first_path %}
+                                        {% set ref_path = first_path if first_path is string else first_path.filename %}
+                                        <div class="mb-2">
+                                            <img src="{{ url_for('static', filename='uploads/' ~ ref_path) }}" 
+                                                 class="img-thumbnail" style="width: 100%; height: 160px; object-fit: cover;">
+                                        </div>
+                                        {% else %}
+                                        <div class="text-muted small">No image</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="card-footer">
+                                        <small class="text-muted">
+                                            Added: {{ item.created_at if item.created_at is string else item.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                        </small>
+                                        <div class="float-end">
+                                            <button class="btn btn-outline-danger btn-sm delete-item" data-item-id="{{ item.id }}">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-utensils fa-4x text-muted mb-3"></i>
+                            <h4 class="text-muted">No Menu Items Yet</h4>
+                            <p class="text-muted">Add your first menu item to start food recognition</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h5>Processing Images...</h5>
+                <p class="text-muted">Training AI model with your reference images</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Image preview functionality
+    $('#item-images').change(function() {
+        const files = this.files;
+        const preview = $('#image-preview');
+        preview.empty();
+        
+        if (files.length > 0) {
+            preview.append('<label class="form-label">Preview:</label><div class="row" id="preview-container"></div>');
+            const container = $('#preview-container');
+            
+            for (let i = 0; i < Math.min(files.length, 8); i++) {
+                const file = files[i];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    container.append(`
+                        <div class="col-3 mb-2">
+                            <img src="${e.target.result}" class="img-thumbnail" style="width: 100%; height: 80px; object-fit: cover;">
+                        </div>
+                    `);
+                };
+                
+                reader.readAsDataURL(file);
+            }
+            
+            if (files.length > 8) {
+                container.append(`
+                    <div class="col-12">
+                        <small class="text-muted">+${files.length - 8} more images will be uploaded</small>
+                    </div>
+                `);
+            }
+        }
+    });
+    
+    // Form submission
+    $('#add-item-form').submit(function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const files = $('#item-images')[0].files;
+        
+        // Validation
+        if (!$('#item-name').val().trim()) {
+            alert('Please enter an item name');
+            return;
+        }
+        
+        if (files.length === 0) {
+            alert('Please select at least one reference image');
+            return;
+        }
+        
+        // Single image is allowed; system will auto-augment when only one image is provided
+        
+        // Show loading modal
+        $('#loadingModal').modal('show');
+        
+        // Submit form
+        $.ajax({
+            url: '/add_menu_item',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                $('#loadingModal').modal('hide');
+                
+                if (response.success) {
+                    alert('Menu item added successfully!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + (response.error || 'Unknown error'));
+                }
+            },
+            error: function(xhr) {
+                $('#loadingModal').modal('hide');
+                
+                let errorMessage = 'Failed to add menu item';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMessage += ': ' + xhr.responseJSON.error;
+                }
+                alert(errorMessage);
+            }
+        });
+    });
+    
+    // Form reset
+    $('button[type="reset"]').click(function() {
+        $('#image-preview').empty();
+    });
+
+    // Delete menu item
+    $('.delete-item').click(function() {
+        const id = $(this).data('item-id');
+        if (!confirm('Delete this menu item? This will remove its images from disk.')) return;
+        $.post(`/delete_menu_item/${id}`, function(resp) {
+            if (resp.success) {
+                location.reload();
+            } else {
+                alert('Delete failed: ' + (resp.error || 'Unknown error'));
+            }
+        }).fail(function(xhr) {
+            let msg = 'Delete failed';
+            if (xhr.responseJSON && xhr.responseJSON.error) msg += ': ' + xhr.responseJSON.error;
+            alert(msg);
+        });
+    });
+});
+</script>
+{% endblock %}
