@@ -41,6 +41,16 @@ instance/
 *.pkl
 *.pickle
 
+# Large model files (download via script)
+backend/mobileclip_blt.ts
+backend/models/*.pt
+backend/models/*.pth
+backend/models/*.onnx
+backend/models/*.bin
+backend/models/yolo*
+backend/models/mobilenet*
+backend/models/clip*
+
 # Jupyter Notebook
 .ipynb_checkpoints
 

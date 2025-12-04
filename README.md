@@ -34,6 +34,41 @@ ServeTrack revolutionizes food service management by providing real-time detecti
 - **Responsive Design**: Beautiful UI built with Tailwind CSS
 - **Production Ready**: PM2 process management and deployment scripts
 
+## 🚀 Quick Start
+
+Want to get ServeTrack running quickly? Follow these essential steps:
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/YOUR_USERNAME/servetrack.git
+cd servetrack
+
+# 2. Download AI models
+./download-models.sh  # Windows: download-models.bat
+
+# 3. Setup database
+mysql -u root -p < backend/database_setup.sql
+
+# 4. Setup backend
+cd backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+cp env.example .env
+# Edit .env with your settings
+
+# 5. Setup frontend
+cd ../frontend
+npm install
+npm run build
+
+# 6. Start the application
+cd ..
+./deploy.sh  # Or use start-dev.sh for development
+```
+
+Access the application at `http://localhost:3000` (development) or your server IP (production).
+
 ## 📋 Prerequisites
 
 Before you begin, ensure you have the following installed:
@@ -73,6 +108,7 @@ SERVETRACK_BACKUP/
 │   ├── menu/                  # Menu item images
 │   ├── models/                # ML models directory
 │   ├── scripts/               # Utility scripts
+│   │   └── download_models.py # AI model download script
 │   └── utils/                 # Helper utilities
 │
 ├── frontend/                  # React frontend
@@ -105,6 +141,8 @@ SERVETRACK_BACKUP/
 │
 ├── deploy.sh                 # Production deployment script
 ├── start-dev.sh             # Development start script
+├── download-models.sh       # AI model download script (Linux/Mac)
+├── download-models.bat      # AI model download script (Windows)
 ├── .gitignore               # Git ignore patterns
 └── README.md                # This file
 ```
@@ -200,15 +238,26 @@ mkdir -p logs detections models
 
 **Download Required Models:**
 
-The application requires YOLO-World model. Download it manually:
+ServeTrack uses AI models that are downloaded automatically via our script:
 
 ```bash
-# Download YOLOv8-World model
-wget https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8l-world.pt -O models/yolov8l-world.pt
+# Download all models (recommended)
+./download-models.sh
 
-# Or use a smaller model for faster inference
-wget https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8m-world.pt -O models/yolov8m-world.pt
+# Or on Windows
+download-models.bat
+
+# Download specific model only
+./download-models.sh --model yolov8s-world
+
+# List available models
+./download-models.sh --list
 ```
+
+**Available Models:**
+- `yolov8s-world` - Small model (~22MB) - Fastest inference
+- `yolov8m-world` - Medium model (~52MB) - Balanced speed/accuracy  
+- `yolov8l-world` - Large model (~88MB) - Best accuracy
 
 ### Step 4: Setup Frontend
 
@@ -238,7 +287,26 @@ VITE_SOCKET_URL=http://localhost:8000
 npm run build
 ```
 
-### Step 5: Start the Application
+### Step 5: Download AI Models
+
+**Important:** Download the required AI models before starting the application:
+
+```bash
+# Download all models (recommended for first setup)
+./download-models.sh
+
+# Or download a specific model for development
+./download-models.sh --model yolov8s-world
+```
+
+**Windows users:**
+```cmd
+download-models.bat
+```
+
+The script will download models to `backend/models/` directory.
+
+### Step 6: Start the Application
 
 #### Option A: Using Deployment Script (Recommended)
 
@@ -494,8 +562,11 @@ sudo systemctl status mysql
 
 **Model loading errors:**
 ```bash
-# Verify model file exists
-ls -lh backend/models/yolov8l-world.pt
+# Download models if missing
+./download-models.sh
+
+# Verify model files exist
+ls -lh backend/models/
 
 # Check model permissions
 chmod 644 backend/models/*.pt
@@ -503,7 +574,10 @@ chmod 644 backend/models/*.pt
 # Test model loading
 cd backend
 source venv/bin/activate
-python -c "from ultralytics import YOLO; model = YOLO('models/yolov8l-world.pt')"
+python -c "from ultralytics import YOLO; model = YOLO('models/yolov8s-world.pt')"
+
+# Re-download corrupted models
+./download-models.sh --force
 ```
 
 ### Frontend Issues
